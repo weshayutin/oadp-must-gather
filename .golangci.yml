@@ -1,0 +1,108 @@
+# Documentation reference https://github.com/golangci/golangci-lint/blob/v1.56.2/.golangci.reference.yml
+run:
+  skip-dirs-use-default: false
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true
+
+linters-settings:
+  dogsled:
+    max-blank-identifiers: 2
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/mateusoliveira43/oadp-must-gather)
+  goconst:
+    min-len: 3
+    min-occurrences: 5
+  gofmt:
+    simplify: true
+  # goheader:
+  #   # copy from ./LICENSE
+  #   template: |-
+  #     MIT License...
+  govet:
+    enable-all: true
+  misspell:
+    locale: US
+  nakedret:
+    max-func-lines: 30
+  nolintlint:
+    allow-unused: false
+    allow-no-explanation: []
+    require-explanation: true
+    require-specific: true
+  revive:
+    enable-all-rules: true
+    rules:
+      - name: line-length-limit
+        disabled: true
+  unparam:
+    check-exported: true
+
+linters:
+  disable-all: true
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - dogsled
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - exportloopref
+    - gci
+    - ginkgolinter
+    - goconst
+    - gofmt
+    # - goheader
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - revive
+    - staticcheck
+    - stylecheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+  fast: false
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - linters:
+        - revive
+      text: "^struct-tag: unknown option 'inline' in JSON tag$"
+    - linters:
+        - revive
+      text: "^add-constant: avoid magic numbers like '0', create a named constant for it$"
+    - linters:
+        - revive
+      text: "^add-constant: avoid magic numbers like '1', create a named constant for it$"
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+severity:
+  default-severity: error
+  case-sensitive: false
