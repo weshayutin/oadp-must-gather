@@ -1,7 +1,5 @@
-FROM --platform=$BUILDPLATFORM quay.io/konveyor/builder:ubi9-latest AS builder
-ARG BUILDPLATFORM
+FROM quay.io/konveyor/builder:ubi9-latest AS builder
 ARG TARGETOS
-ARG TARGETARCH
 
 WORKDIR /workspace
 
@@ -13,7 +11,7 @@ RUN go mod download
 COPY cmd/main.go cmd/main.go
 COPY pkg/ pkg/
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -mod=mod -a -o gather cmd/main.go
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} go build -mod=mod -a -o gather cmd/main.go
 
 FROM registry.access.redhat.com/ubi9-minimal:latest
 
