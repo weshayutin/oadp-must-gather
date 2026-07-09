@@ -704,7 +704,13 @@ func ReplaceBackupsSection(
 						"logs",
 					)
 				}
-				yamlLink := fmt.Sprintf("[`yaml`](%s)", file)
+				perBackupFile := folder + "/" + backup.Name + "-yaml.log"
+				yamlBuf := &bytes.Buffer{}
+				yamlPrinter := printers.YAMLPrinter{}
+				if printErr := yamlPrinter.PrintObj(&backup, yamlBuf); printErr != nil {
+					fmt.Println(printErr)
+				}
+				yamlLink := createFile(outputPath, perBackupFile, yamlBuf.String(), "yaml")
 				summaryTemplateReplaces["BACKUPS"] += fmt.Sprintf(
 					"| %v | %v | %s | %s | %s | %s |\n",
 					namespace, backup.Name,
@@ -812,7 +818,13 @@ func ReplaceRestoresSection(
 					)
 				}
 
-				yamllink := fmt.Sprintf("[`yaml`](%s)", file)
+				perRestoreFile := folder + "/" + restore.Name + "-yaml.log"
+				yamlBuf := &bytes.Buffer{}
+				yamlPrinter := printers.YAMLPrinter{}
+				if printErr := yamlPrinter.PrintObj(&restore, yamlBuf); printErr != nil {
+					fmt.Println(printErr)
+				}
+				yamllink := createFile(outputPath, perRestoreFile, yamlBuf.String(), "yaml")
 				summaryTemplateReplaces["RESTORES"] += fmt.Sprintf(
 					"| %v | %v | %s | %s | %s | %s |\n",
 					namespace, restore.Name,
