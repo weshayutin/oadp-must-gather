@@ -18,12 +18,12 @@ COPY deprecated/ deprecated/
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -mod=mod -a -o gather cmd/main.go
 
-RUN curl --location --output kopia.tgz https://github.com/migtools/kopia/archive/refs/heads/${KOPIA_BRANCH}.tar.gz && \
+RUN curl --fail --retry 5 --retry-delay 10 --location --output kopia.tgz https://github.com/migtools/kopia/archive/refs/heads/${KOPIA_BRANCH}.tar.gz && \
     tar -xzvf kopia.tgz && cd kopia-${KOPIA_BRANCH} && \
     CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -mod=mod -a -ldflags '-extldflags "-static"' -o /kopia github.com/kopia/kopia && \
     cd .. && rm -rf kopia.tgz kopia-${KOPIA_BRANCH}
 
-RUN curl --location --output restic.tgz https://github.com/openshift/restic/archive/refs/heads/${RESTIC_BRANCH}.tar.gz && \
+RUN curl --fail --retry 5 --retry-delay 10 --location --output restic.tgz https://github.com/openshift/restic/archive/refs/heads/${RESTIC_BRANCH}.tar.gz && \
     tar -xzvf restic.tgz && cd restic-${RESTIC_BRANCH} && \
     CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -mod=mod -a -ldflags '-extldflags "-static"' -o /restic github.com/restic/restic/cmd/restic && \
     cd .. && rm -rf restic.tgz restic-${RESTIC_BRANCH}

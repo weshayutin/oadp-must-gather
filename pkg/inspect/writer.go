@@ -18,7 +18,7 @@ const (
 	folderPermission = os.ModePerm
 )
 
-func writeYAML(filepath string, obj runtime.Object) error {
+func writeYAML(filepath string, obj runtime.Object) (retErr error) {
 	dir := path.Dir(filepath)
 	if err := os.MkdirAll(dir, folderPermission); err != nil {
 		return fmt.Errorf("unable to create dir %s: %w", dir, err)
@@ -28,13 +28,17 @@ func writeYAML(filepath string, obj runtime.Object) error {
 	if err != nil {
 		return fmt.Errorf("unable to create file %s: %w", filepath, err)
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil && retErr == nil {
+			retErr = closeErr
+		}
+	}()
 
 	printer := printers.YAMLPrinter{}
 	return printer.PrintObj(obj, f)
 }
 
-func writeLogFromRequest(filepath string, req *rest.Request) error {
+func writeLogFromRequest(filepath string, req *rest.Request) (retErr error) {
 	dir := path.Dir(filepath)
 	if err := os.MkdirAll(dir, folderPermission); err != nil {
 		return fmt.Errorf("unable to create dir %s: %w", dir, err)
@@ -50,7 +54,11 @@ func writeLogFromRequest(filepath string, req *rest.Request) error {
 	if err != nil {
 		return fmt.Errorf("unable to create file %s: %w", filepath, err)
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil && retErr == nil {
+			retErr = closeErr
+		}
+	}()
 
 	_, err = io.Copy(f, stream)
 	if errors.Is(err, io.ErrUnexpectedEOF) {
