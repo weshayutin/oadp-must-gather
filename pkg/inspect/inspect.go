@@ -23,13 +23,17 @@ func InspectNamespaces(ctx context.Context, restConfig *rest.Config, destDir str
 
 	var errs []error
 	for _, ns := range namespaces {
+		if ctx.Err() != nil {
+			errs = append(errs, ctx.Err())
+			break
+		}
 		if err := gatherNamespaceData(ctx, kubeClient, dynamicClient, destDir, ns); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("errors occurred while inspecting namespaces:\n    %v", errors.NewAggregate(errs))
+		return fmt.Errorf("errors occurred while inspecting namespaces: %w", errors.NewAggregate(errs))
 	}
 	return nil
 }
