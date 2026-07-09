@@ -7,6 +7,7 @@ import (
 	"path"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,7 +51,7 @@ func namespacedResourcesToCollect() []namespaceResource {
 	}
 }
 
-func gatherNamespaceData(kubeClient kubernetes.Interface, dynamicClient dynamic.Interface, destDir string, namespace string) error {
+func gatherNamespaceData(ctx context.Context, kubeClient kubernetes.Interface, dynamicClient dynamic.Interface, destDir string, namespace string) error {
 	fmt.Printf("Gathering data for ns/%s...\n", namespace)
 
 	nsDir := path.Join(destDir, "namespaces", namespace)
@@ -58,7 +59,7 @@ func gatherNamespaceData(kubeClient kubernetes.Interface, dynamicClient dynamic.
 		return err
 	}
 
-	ns, err := kubeClient.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+	ns, err := kubeClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("unable to get namespace %s: %w", namespace, err)
 	}
@@ -71,9 +72,13 @@ func gatherNamespaceData(kubeClient kubernetes.Interface, dynamicClient dynamic.
 
 	var podList *unstructured.UnstructuredList
 	for _, res := range namespacedResourcesToCollect() {
-		list, err := dynamicClient.Resource(res.gvr).Namespace(namespace).List(context.TODO(), metav1.ListOptions{})
+		list, err := dynamicClient.Resource(res.gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
 		if err != nil {
-			fmt.Printf("  skipping %s/%s: %v\n", res.dirGroup, res.gvr.Resource, err)
+			if apierrors.IsNotFound(err) {
+				fmt.Printf("  skipping %s/%s: resource not found\n", res.dirGroup, res.gvr.Resource)
+				continue
+			}
+			errs = append(errs, fmt.Errorf("listing %s/%s in %s: %w", res.dirGroup, res.gvr.Resource, namespace, err))
 			continue
 		}
 
@@ -107,7 +112,7 @@ func gatherNamespaceData(kubeClient kubernetes.Interface, dynamicClient dynamic.
 				errs = append(errs, fmt.Errorf("unable to convert pod %s: %w", podUnstr.GetName(), err))
 				continue
 			}
-			if err := gatherPodData(kubeClient, podsDir, structuredPod); err != nil {
+			if err := gatherPodData(ctx, kubeClient, podsDir, structuredPod); err != nil {
 				errs = append(errs, fmt.Errorf("error gathering pod data for %s: %w", structuredPod.Name, err))
 			}
 		}

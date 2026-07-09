@@ -1,6 +1,7 @@
 package inspect
 
 import (
+	"context"
 	"path"
 	"strings"
 	"sync"
@@ -10,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func gatherPodData(kubeClient kubernetes.Interface, destDir string, pod *corev1.Pod) error {
+func gatherPodData(ctx context.Context, kubeClient kubernetes.Interface, destDir string, pod *corev1.Pod) error {
 	podDir := path.Join(destDir, pod.Name)
 
 	if err := writeYAML(path.Join(podDir, pod.Name+".yaml"), pod); err != nil {
@@ -19,12 +20,12 @@ func gatherPodData(kubeClient kubernetes.Interface, destDir string, pod *corev1.
 
 	var errs []error
 	for _, container := range pod.Spec.Containers {
-		if err := gatherContainerLogs(kubeClient, podDir, pod, container); err != nil {
+		if err := gatherContainerLogs(ctx, kubeClient, podDir, pod, container); err != nil {
 			errs = append(errs, err)
 		}
 	}
 	for _, container := range pod.Spec.InitContainers {
-		if err := gatherContainerLogs(kubeClient, podDir, pod, container); err != nil {
+		if err := gatherContainerLogs(ctx, kubeClient, podDir, pod, container); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -32,7 +33,7 @@ func gatherPodData(kubeClient kubernetes.Interface, destDir string, pod *corev1.
 	return errors.NewAggregate(errs)
 }
 
-func gatherContainerLogs(kubeClient kubernetes.Interface, podDir string, pod *corev1.Pod, container corev1.Container) error {
+func gatherContainerLogs(ctx context.Context, kubeClient kubernetes.Interface, podDir string, pod *corev1.Pod, container corev1.Container) error {
 	logsDir := path.Join(podDir, container.Name, container.Name, "logs")
 
 	var errs []error
@@ -51,11 +52,11 @@ func gatherContainerLogs(kubeClient kubernetes.Interface, podDir string, pod *co
 			Timestamps: true,
 		}
 		req := kubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, logOpts)
-		if err := writeLogFromRequest(path.Join(logsDir, "current.log"), req); err != nil {
+		if err := writeLogFromRequest(ctx, path.Join(logsDir, "current.log"), req); err != nil {
 			innerErrs = append(innerErrs, err)
 			logOpts.InsecureSkipTLSVerifyBackend = true
 			req = kubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, logOpts)
-			if err := writeLogFromRequest(path.Join(logsDir, "current.insecure.log"), req); err != nil {
+			if err := writeLogFromRequest(ctx, path.Join(logsDir, "current.insecure.log"), req); err != nil {
 				innerErrs = append(innerErrs, err)
 			}
 		}
@@ -77,12 +78,12 @@ func gatherContainerLogs(kubeClient kubernetes.Interface, podDir string, pod *co
 			Timestamps: true,
 		}
 		req := kubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, logOpts)
-		if err := writeLogFromRequest(path.Join(logsDir, "previous.log"), req); err != nil {
+		if err := writeLogFromRequest(ctx, path.Join(logsDir, "previous.log"), req); err != nil {
 			if !isPreviousContainerNotFound(err) {
 				innerErrs = append(innerErrs, err)
 				logOpts.InsecureSkipTLSVerifyBackend = true
 				req = kubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, logOpts)
-				if err := writeLogFromRequest(path.Join(logsDir, "previous.insecure.log"), req); err != nil {
+				if err := writeLogFromRequest(ctx, path.Join(logsDir, "previous.insecure.log"), req); err != nil {
 					innerErrs = append(innerErrs, err)
 				}
 			}

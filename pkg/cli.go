@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strconv"
@@ -299,7 +300,7 @@ For more information, check OADP must-gather documentation: https://docs.redhat.
 				for namespace := range importantCSVsByNamespace {
 					namespacesToInspect = append(namespacesToInspect, namespace)
 				}
-				err = inspect.InspectNamespaces(clusterConfig, outputPath, namespacesToInspect)
+				err = inspect.InspectNamespaces(context.TODO(), clusterConfig, outputPath, namespacesToInspect)
 				if err != nil {
 					fmt.Println(err)
 				}

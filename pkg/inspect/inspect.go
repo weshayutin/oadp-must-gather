@@ -1,6 +1,7 @@
 package inspect
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/util/errors"
@@ -9,7 +10,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func InspectNamespaces(restConfig *rest.Config, destDir string, namespaces []string) error {
+func InspectNamespaces(ctx context.Context, restConfig *rest.Config, destDir string, namespaces []string) error {
 	kubeClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return fmt.Errorf("unable to create kubernetes client: %w", err)
@@ -22,7 +23,7 @@ func InspectNamespaces(restConfig *rest.Config, destDir string, namespaces []str
 
 	var errs []error
 	for _, ns := range namespaces {
-		if err := gatherNamespaceData(kubeClient, dynamicClient, destDir, ns); err != nil {
+		if err := gatherNamespaceData(ctx, kubeClient, dynamicClient, destDir, ns); err != nil {
 			errs = append(errs, err)
 		}
 	}

@@ -38,17 +38,21 @@ func writeYAML(filepath string, obj runtime.Object) (retErr error) {
 	return printer.PrintObj(obj, f)
 }
 
-func writeLogFromRequest(filepath string, req *rest.Request) (retErr error) {
+func writeLogFromRequest(ctx context.Context, filepath string, req *rest.Request) (retErr error) {
 	dir := path.Dir(filepath)
 	if err := os.MkdirAll(dir, folderPermission); err != nil {
 		return fmt.Errorf("unable to create dir %s: %w", dir, err)
 	}
 
-	stream, err := req.Stream(context.TODO())
+	stream, err := req.Stream(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to stream logs to %s: %w", filepath, err)
 	}
-	defer stream.Close()
+	defer func() {
+		if closeErr := stream.Close(); closeErr != nil && retErr == nil {
+			retErr = closeErr
+		}
+	}()
 
 	f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePermission)
 	if err != nil {
