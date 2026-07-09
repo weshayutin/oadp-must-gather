@@ -57,13 +57,6 @@ As new CRD sources are added to the must-gather, they should also be added to th
 
 Update it often. It must be updated prior to releases.
 
-Possible necessary updates over the time
-```sh
-go get github.com/openshift/oc@<branch-or-commit>
-go mod tidy
-go mod verify
-```
-
 ## OADP release
 
 Prior to each release, OADP Must-gather must be updated.
