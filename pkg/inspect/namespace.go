@@ -118,11 +118,13 @@ func gatherNamespaceData(kubeClient kubernetes.Interface, dynamicClient dynamic.
 
 func unstructuredListToSecretList(list *unstructured.UnstructuredList) (*corev1.SecretList, error) {
 	secretList := &corev1.SecretList{}
+	secretList.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("SecretList"))
 	for _, item := range list.Items {
 		secret := &corev1.Secret{}
 		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, secret); err != nil {
 			return nil, err
 		}
+		secret.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
 		secretList.Items = append(secretList.Items, *secret)
 	}
 	return secretList, nil
