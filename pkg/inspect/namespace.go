@@ -86,11 +86,11 @@ func gatherNamespaceData(kubeClient kubernetes.Interface, dynamicClient dynamic.
 		if res.gvr.Resource == "secrets" {
 			secretList, convErr := unstructuredListToSecretList(list)
 			if convErr != nil {
-				errs = append(errs, convErr)
-			} else {
-				elideSecretList(secretList)
-				objToPrint = secretList
+				errs = append(errs, fmt.Errorf("skipping secrets write for %s: %w", namespace, convErr))
+				continue
 			}
+			elideSecretList(secretList)
+			objToPrint = secretList
 		}
 
 		filePath := path.Join(nsDir, res.dirGroup, res.gvr.Resource+".yaml")

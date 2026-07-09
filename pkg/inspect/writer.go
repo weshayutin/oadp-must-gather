@@ -2,6 +2,7 @@ package inspect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -23,7 +24,7 @@ func writeYAML(filepath string, obj runtime.Object) error {
 		return fmt.Errorf("unable to create dir %s: %w", dir, err)
 	}
 
-	f, err := os.Create(filepath)
+	f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePermission)
 	if err != nil {
 		return fmt.Errorf("unable to create file %s: %w", filepath, err)
 	}
@@ -45,12 +46,16 @@ func writeLogFromRequest(filepath string, req *rest.Request) error {
 	}
 	defer stream.Close()
 
-	f, err := os.Create(filepath)
+	f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePermission)
 	if err != nil {
 		return fmt.Errorf("unable to create file %s: %w", filepath, err)
 	}
 	defer f.Close()
 
 	_, err = io.Copy(f, stream)
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		fmt.Printf("  warning: partial log written to %s (unexpected EOF)\n", filepath)
+		return nil
+	}
 	return err
 }

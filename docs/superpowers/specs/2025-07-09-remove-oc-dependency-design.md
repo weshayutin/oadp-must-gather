@@ -123,7 +123,7 @@ Log collection uses `kubernetes.Interface.CoreV1().Pods(ns).GetLogs(name, opts)`
 
 #### Secret Sanitization
 
-Before writing secrets to disk, replace all values in `.data` with the string `"redacted"`. This matches `oc adm inspect` behavior that prevents sensitive data from being included in must-gather output.
+Before writing secrets to disk, replace each value in `.data` with `"N bytes long"` (where N is the original byte length), preserving public keys (`tls.crt`, `ca.crt`, `service-ca.crt`). Also clear the `openshift.io/token-secret.value` and `kubectl.kubernetes.io/last-applied-configuration` annotations. This matches `oc adm inspect` behavior.
 
 #### Directory Structure
 
