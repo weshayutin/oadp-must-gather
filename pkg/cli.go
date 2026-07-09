@@ -12,18 +12,17 @@ import (
 	vmfrv1alpha1 "github.com/migtools/oadp-vm-file-restore/api/v1alpha1"
 	openshiftconfigv1 "github.com/openshift/api/config/v1"
 	oadpv1alpha1 "github.com/openshift/oadp-operator/api/v1alpha1"
-	ocadminspect "github.com/openshift/oc/pkg/cli/admin/inspect"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/cobra"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	velerov2alpha1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v2alpha1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	"github.com/openshift/oadp-must-gather/pkg/gather"
+	"github.com/openshift/oadp-must-gather/pkg/inspect"
 	"github.com/openshift/oadp-must-gather/pkg/templates"
 )
 
@@ -295,25 +294,12 @@ For more information, check OADP must-gather documentation: https://docs.redhat.
 				}
 			}
 
-			// oc adm inspect --dest-dir must-gather/clusters/${clusterID} ns/${ns}
 			if len(importantCSVsByNamespace) != 0 {
-				ocAdmInspect := ocadminspect.NewInspectOptions(genericiooptions.NewTestIOStreamsDiscard())
-				ocAdmInspect.DestDir = outputPath
-				ocAdmInspectNamespaces := []string{}
+				namespacesToInspect := []string{}
 				for namespace := range importantCSVsByNamespace {
-					ocAdmInspectNamespaces = append(ocAdmInspectNamespaces, "ns/"+namespace)
+					namespacesToInspect = append(namespacesToInspect, namespace)
 				}
-
-				// https://github.com/openshift/oc/blob/ae1bd9e4a75b8ab617a569e5c8e1a0d7285a16f6/pkg/cli/admin/inspect/inspect.go#L108
-				err = ocAdmInspect.Complete(ocAdmInspectNamespaces)
-				if err != nil {
-					fmt.Println(err)
-				}
-				err = ocAdmInspect.Validate()
-				if err != nil {
-					fmt.Println(err)
-				}
-				err = ocAdmInspect.Run()
+				err = inspect.InspectNamespaces(clusterConfig, outputPath, namespacesToInspect)
 				if err != nil {
 					fmt.Println(err)
 				}
