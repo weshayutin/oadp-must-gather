@@ -1,6 +1,3 @@
-# oc
-FROM brew.registry.redhat.io/rh-osbs/openshift-ose-cli-rhel9:v4.21 AS ose-cli
-
 FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_golang_1.25 AS builder
 
 COPY . /workspace
@@ -52,7 +49,6 @@ RUN dnf -y install openssl rsync tar gzip && dnf -y reinstall tzdata && dnf -y c
 
 COPY --from=builder /workspace/velero/bin/velero /usr/bin/velero
 COPY --from=builder /workspace/restic/bin/restic /usr/bin/restic
-COPY --from=ose-cli /usr/bin/oc /usr/bin/oc
 COPY --from=builder /workspace/kopia/kopia /usr/bin/kopia
 COPY --from=builder /workspace/gather /usr/bin/gather
 COPY --from=builder /workspace/deprecated/gather_* /usr/bin/
